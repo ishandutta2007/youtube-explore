@@ -1,2 +1,2 @@
 # Dependencies
-beautifulsoup4
+beautifulsoup4==4.6.0

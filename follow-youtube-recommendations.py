@@ -8,7 +8,7 @@ __author__ = 'Guillaume Chaslot'
         4) stores the results in a json file
 """
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import re
 import json
 import sys
@@ -43,27 +43,28 @@ class YoutubeFollower():
         self._recent=recent
         self._loopok=loopok
 
-        print ('Location = ' + repr(self._gl) + ' Language = ' + repr(self._language))
+        print('Location = ' + repr(self._gl) + ' Language = ' + repr(self._language))
 
     def clean_count(self, text_count):
         # Ignore non ascii
         ascii_count = text_count.encode('ascii', 'ignore')
         # Ignore non numbers
-        p = re.compile('[\d,]+')
-        return int(p.findall(ascii_count)[0].replace(',', ''))
+        p = re.compile(r'[\d,]+')
+        asciis = p.findall(ascii_count.decode('utf-8'))
+        return int(asciis[0].replace(',', ''))
 
     def get_search_results(self, search_terms, max_results, top_rated=False):
         assert max_results < 20, 'max_results was not implemented to be > 20'
 
         if self._verbose:
-            print ('Searching for {}'.format(search_terms))
+            print('Searching for {}'.format(search_terms))
 
         # Trying to get results from cache
         if search_terms in self._search_infos and len(self._search_infos[search_terms]) >= max_results:
             return self._search_infos[search_terms][0:max_results]
 
         # Escaping search terms for youtube
-        escaped_search_terms = urllib2.quote(search_terms.encode('utf-8'))
+        escaped_search_terms = urllib.parse.quote(search_terms.encode('utf-8'))
 
         # We only want search results that are videos, filtered by viewcoung.
         #  This is achieved by using the youtube URI parameter: sp=CAMSAhAB
@@ -79,13 +80,13 @@ class YoutubeFollower():
         if self._gl:
             url = url + '&gl=' + self._gl
 
-        print ('Searching URL: ' + url)
+        print('Searching URL: ' + url)
 
         headers = {}
         if self._language:
             headers["Accept-Language"] = self._language
-        url_request = urllib2.Request(url, headers=headers)
-        html = urllib2.urlopen(url_request)
+        url_request = urllib.request.Request(url, headers=headers)
+        html = urllib.request.urlopen(url_request)
         soup = BeautifulSoup(html, "lxml")
 
         videos = []
@@ -112,16 +113,16 @@ class YoutubeFollower():
                         break
             if self._loopok:
                 video['key'].append(key)
-            print ('\n Following recommendations ' + repr(recos_returned) + '\n')
+            print('\n Following recommendations ' + repr(recos_returned) + '\n')
             return recos_returned
 
         url = "https://www.youtube.com/watch?v=" + video_id
 
         while True:
             try:
-                html = urllib2.urlopen(url)
+                html = urllib.request.urlopen(url)
                 break
-            except urllib2.URLError:
+            except urllib.error.URLError:
                 time.sleep(1)
         soup = BeautifulSoup(html, "lxml")
 
@@ -205,7 +206,7 @@ class YoutubeFollower():
                 self._video_infos[video_id]['key'].append(key)
 
         video = self._video_infos[video_id]
-        print (repr(video_id + ': ' + video['title'] + ' [' + channel + ']{' + repr(key) +'} ' + str(video['views']) + ' views , depth: ' + str(video['depth'])))
+        print(repr(video_id + ': ' + video['title'] + ' [' + channel + ']{' + repr(key) +'} ' + str(video['views']) + ' views , depth: ' + str(video['depth'])))
         # print (repr(video['recommendations']))
         return recos[:nb_recos_wanted]
 
@@ -223,7 +224,7 @@ class YoutubeFollower():
 
     def compute_all_recommendations_from_search(self, search_terms, search_results, branching, depth):
         search_results = self.get_search_results(search_terms, search_results)
-        print ('Search results ' + repr(search_results))
+        print('Search results ' + repr(search_results))
 
         all_recos = []
         ind = 0
@@ -243,8 +244,8 @@ class YoutubeFollower():
     def go_deeper_from(self, search_term, search_results, branching, depth):
         all_recos = self.compute_all_recommendations_from_search(search_term, search_results, branching, depth)
         counts = self.count(all_recos)
-        print ('\n\n\nSearch term = ' + search_term + '\n')
-        print ('counts: ' + repr(counts))
+        print('\n\n\nSearch term = ' + search_term + '\n')
+        print('counts: ' + repr(counts))
         sorted_videos = sorted(counts, key=counts.get, reverse=True)
         return sorted_videos, counts
 
@@ -259,7 +260,7 @@ class YoutubeFollower():
             with open('data/video-infos-' + self._name + '.json', 'r') as fp:
                 return json.load(fp)
         except Exception as e:
-            print ('Failed to load from graph ' + repr(e))
+            print('Failed to load from graph ' + repr(e))
             return {}
 
     def count_recommendation_links(self):
@@ -302,7 +303,7 @@ class YoutubeFollower():
         date = time.strftime('%Y-%m-%d')
         with open('./graph-' + self._name + '-' + date + '.json', 'w') as fp:
             json.dump(graph, fp)
-        print ('Wrote graph as: ' + './graph-' + self._name + '-' + date + '.json')
+        print('Wrote graph as: ' + './graph-' + self._name + '-' + date + '.json')
 
 
     def print_videos(self, videos, counts, max_length):
@@ -310,7 +311,7 @@ class YoutubeFollower():
         for video in videos[:max_length]:
             try:
                 current_title = self._video_infos[video]['title']
-                print (str(idx) + ') Recommended ' + str(counts[video]) + ' times: '
+                print(str(idx) + ') Recommended ' + str(counts[video]) + ' times: '
                     ' https://www.youtube.com/watch?v=' + video + ' , Title: ' + repr(current_title))
                 if idx % 20 == 0:
                     print ('')
@@ -342,7 +343,7 @@ class YoutubeFollower():
 def compare_keywords(query, search_results, branching, depth, name, gl, language, recent, loopok):
     date = time.strftime('%Y-%m-%d')
     file_name = 'results/' + name + '-' + date + '.json'
-    print ('Running, will save the resulting json to:' + file_name)
+    print('Running, will save the resulting json to:' + file_name)
     top_videos = {}
     for keyword in query.split(','):
         yf = YoutubeFollower(verbose=True, name=keyword, alltime=False, gl=gl, language=language, recent=recent, loopok=loopok)
