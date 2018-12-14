@@ -25,3 +25,10 @@ python2.7 follow-youtube-recommendations.py  --query="global warming,vaccines,na
 * --branch: branching factor = number of recommendations that are followed
 * --name: name under which it will be saved
 * --alltime: add this option if you want to start from the most viewed videos for the query (using the option filter by viewcount on youtube)
+
+### Support:
+
+If you want the good work to continue please support us on
+
+* [PAYPAL](https://www.paypal.me/ishandutta2007)
+* [BITCOIN ADDRESS: 3LZazKXG18Hxa3LLNAeKYZNtLzCxpv1LyD](https://www.coinbase.com/join/5a8e4a045b02c403bc3a9c0c)
